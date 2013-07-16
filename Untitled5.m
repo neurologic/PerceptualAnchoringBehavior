@@ -1,7 +1,7 @@
 % specify bird ID and options for analysis
-
-birdID='767';
-stimfile='SDtones_new';
+r=rigdef('manu')
+birdID='1153';
+stimfile='SD_DRC2';
 
 %% read in rDAT file
 Trial=getTrial(birdID,stimfile,r);
@@ -30,6 +30,14 @@ end
 startinds
 lastSession=filtSession(Trial,max(startinds),max(size(Trial.sess)));
 Trial=lastSession;
+ figure; scatter([1:size(lastSession.tod,1)],lastSession.tod)
+
+ today=max(unique(Trial.day));
+lastDay=filtTrial(Trial,'day',today);
+correct=filtTrial(lastDay,'resp',1);
+fed=filtTrial(correct,'reinfor',1);
+feedstoday=size(fed.trialno,1)
+
 %%
 % make a different subplot for each anchor rep
 options.blocksize=1000; %chunks trials into blocks; in that block the distribution of responses and trial types calculated
@@ -52,11 +60,11 @@ for ianchor=1:max(options.anchorRange);
     TargetPlay=filtTrial(Trial,'targetplay',1);
     %these are trials in which a left peck would be required for food
     repcount=anchorRep;
-    TargetTrialType=filtTrial(TargetPlay, 'REPcnt', repcount);
+    TargetTrialType=filtTrial(TargetPlay, 'rep', repcount);
     % from this (anchorRep=repcount followed by target) we can calculate
     % correct and incorrect detection
-    CorrectDetect(ianchor)=max(size(find(TargetTrialType.RspAc==1)));
-    IncorrectDetect(ianchor)=max(size(find(TargetTrialType.RspAc==0)));
+    CorrectDetect(ianchor)=max(size(find(TargetTrialType.resp==1)));
+    IncorrectDetect(ianchor)=max(size(find(TargetTrialType.resp==0)));
 
 %get false alarm struct (trials when no target played)
     NoTarget=filtTrial(Trial,'targetplay',0);
@@ -64,20 +72,20 @@ for ianchor=1:max(options.anchorRange);
     %data
     %for false alarms repcount should be +1 of correct/incorrect repcount
     repcount=anchorRep+1;
-    SameTrialType=filtTrial(NoTarget, 'REPcnt', repcount);
+    SameTrialType=filtTrial(NoTarget, 'rep', repcount);
     %false alarms
-    FalseAlarm(ianchor)=max(size(find(SameTrialType.RspAc==0)));
+    FalseAlarm(ianchor)=max(size(find(SameTrialType.resp==0)));
     
 % get correct observe (repcount is +1 from trial type and target could have
 % played or not)
     repcount=anchorRep+1;   
-    PlusOneTrialType=filtTrial(Trial,'REPcnt',repcount);
-    CorrectSame(ianchor)=max(size(find(PlusOneTrialType.RspAc==1)));
+    PlusOneTrialType=filtTrial(Trial,'rep',repcount);
+    CorrectSame(ianchor)=max(size(find(PlusOneTrialType.resp==1)));
 
 %get no responses
     repcount=anchorRep;
-    TargetNoResp(ianchor)=max(size(find(TargetTrialType.RspAc==2)));
-    AnchorNoResp(ianchor)=max(size(find(SameTrialType.RspAc==2)));
+    TargetNoResp(ianchor)=max(size(find(TargetTrialType.resp==2)));
+    AnchorNoResp(ianchor)=max(size(find(SameTrialType.resp==2)));
 end
 totaltargetplay=max(size(find(Trial.targetplay==1)));
 totalnotarget=max(size(find(Trial.targetplay==0)));
